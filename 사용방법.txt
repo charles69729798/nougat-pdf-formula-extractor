@@ -1,0 +1,195 @@
+================================================================================
+                        Nougat PDF 수식 추출기 사용 방법
+================================================================================
+
+작성일: 2025-01-05
+폴더: C:\git\nougat
+
+================================================================================
+1. 환경 설정
+================================================================================
+
+1.1 가상환경 활성화
+-------------------
+PS C:\git\nougat> .\venv_nougat\Scripts\Activate.ps1
+(venv_nougat) PS C:\git\nougat>
+
+1.2 필수 패키지 확인
+-------------------
+- tokenizers==0.15.2 (중요! 0.21.2는 호환되지 않음)
+- transformers==4.38.2
+- nougat-ocr
+- rapid-latex-ocr
+- paddleocr (선택사항)
+- paddlepaddle (PaddleOCR 사용시 필수)
+
+1.3 버전 충돌 해결
+-----------------
+tokenizers 버전 충돌시:
+(venv_nougat) PS C:\git\nougat> pip install tokenizers==0.15.2 --force-reinstall
+
+fsspec 버전 충돌시:
+(venv_nougat) PS C:\git\nougat> pip install fsspec==2024.12.0 --force-reinstall
+
+================================================================================
+2. 주요 스크립트 설명
+================================================================================
+
+2.1 nougat_latex_ocr_final.py
+-----------------------------
+- 기본 Nougat 래퍼
+- 한글 제거 후 Nougat 실행
+- 사용법: python nougat_latex_ocr_final.py <PDF파일>
+
+2.2 hybrid_formula_extractor.py ⭐ (추천)
+-----------------------------------------
+- RapidLaTeXOCR + PaddleOCR 하이브리드 방식
+- MIT/Apache 라이선스 (상업적 사용 가능)
+- 사용법: python hybrid_formula_extractor.py <PDF파일>
+- 수정사항:
+  * LaTeXOCR 클래스 사용 (대문자 T, X 주의!)
+  * PaddleOCR 파라미터 제거 (use_gpu, show_log 등)
+
+2.3 direct_formula_extractor.py
+-------------------------------
+- 텍스트 기반 PDF에서 직접 수식 추출
+- OCR 없이 빠른 처리
+- 사용법: python direct_formula_extractor.py <PDF파일>
+
+2.4 nougat_enhanced.py
+----------------------
+- 여러 Nougat 모델과 설정 비교
+- base, small, markdown 모드 자동 시도
+- 사용법: python nougat_enhanced.py <PDF파일>
+
+2.5 norm_latex_extractor.py
+---------------------------
+- Norm/nougat-latex-base 모델 사용
+- 수식 특화 파인튜닝 모델
+- 사용법: python norm_latex_extractor.py <PDF파일>
+
+2.6 simple_paddle_extractor.py
+------------------------------
+- PaddleOCR만 사용한 간단한 추출
+- 사용법: python simple_paddle_extractor.py <PDF파일>
+
+================================================================================
+3. 일반적인 작업 흐름
+================================================================================
+
+3.1 PDF에서 수식 추출 (하이브리드 방식) ⭐
+------------------------------------------
+(venv_nougat) PS C:\git\nougat> python hybrid_formula_extractor.py "C:\test\27.pdf"
+
+출력 폴더 예시: hybrid_output_20250705_215641\
+- extraction_results.json (추출 결과)
+- hybrid_report.html (시각화 리포트)
+- nougat_ready_enhanced.pdf (품질 개선된 PDF)
+
+3.2 텍스트 기반 PDF에서 빠른 추출
+---------------------------------
+(venv_nougat) PS C:\git\nougat> python direct_formula_extractor.py "C:\test\27.pdf"
+
+3.3 Nougat 직접 실행
+-------------------
+(venv_nougat) PS C:\git\nougat> nougat "C:\test\27.pdf" -o output --no-skipping
+
+또는 Python 모듈로:
+(venv_nougat) PS C:\git\nougat> python -m nougat "C:\test\27.pdf" -o output --no-skipping
+
+================================================================================
+4. 문제 해결
+================================================================================
+
+4.1 "No module named 'paddle'" 오류
+-----------------------------------
+해결: pip install paddlepaddle
+
+4.2 "Unknown argument: use_gpu" 오류
+------------------------------------
+해결: PaddleOCR() 초기화시 파라미터 제거
+수정됨: hybrid_formula_extractor.py에서 이미 수정됨
+
+4.3 "'tuple' object has no attribute 'strip'" 오류
+--------------------------------------------------
+해결: rapid_latex_ocr 결과가 튜플로 반환됨
+수정됨: hybrid_formula_extractor.py에서 이미 수정됨
+
+4.4 tokenizers 버전 충돌
+-----------------------
+오류: tokenizers>=0.14,<0.19 is required but found tokenizers==0.21.2
+해결: pip install tokenizers==0.15.2 --force-reinstall
+
+4.5 rapid-latex-ocr import 오류
+-------------------------------
+올바른 import: from rapid_latex_ocr import LaTeXOCR (대문자 T, X!)
+틀린 import: from rapid_latex_ocr import LatexOCR
+
+================================================================================
+5. 테스트 및 진단 도구
+================================================================================
+
+5.1 rapid-latex-ocr 테스트
+--------------------------
+python test_rapid_latex.py
+
+5.2 PaddleOCR 파라미터 테스트
+-----------------------------
+python test_paddleocr_params.py
+
+5.3 PDF 분석 (텍스트/이미지 판별)
+---------------------------------
+python analyze_pdf.py <PDF파일>
+
+5.4 PDF 텍스트 직접 추출
+------------------------
+python extract_pdf_text.py <PDF파일>
+
+================================================================================
+6. 추가 정보
+================================================================================
+
+6.1 라이선스
+-----------
+- RapidLaTeXOCR: MIT License (상업적 사용 가능)
+- PaddleOCR: Apache 2.0 License (상업적 사용 가능)
+- PyMuPDF: MIT License (상업적 사용 가능)
+- Nougat: MIT License (상업적 사용 가능)
+
+6.2 성능 팁
+----------
+- 텍스트 기반 PDF: direct_formula_extractor.py 사용
+- 스캔된 이미지 PDF: hybrid_formula_extractor.py 사용
+- 복잡한 학술 논문: nougat_enhanced.py 사용
+
+6.3 출력 형식
+------------
+- JSON: 프로그램에서 사용할 수 있는 구조화된 데이터
+- HTML: 브라우저에서 볼 수 있는 시각화 리포트 (MathJax 렌더링 포함)
+
+================================================================================
+7. 자주 사용하는 명령어 모음
+================================================================================
+
+# 가상환경 활성화
+.\venv_nougat\Scripts\Activate.ps1
+
+# 하이브리드 수식 추출 (추천)
+python hybrid_formula_extractor.py "C:\test\27.pdf"
+
+# 직접 텍스트 추출 (빠름)
+python direct_formula_extractor.py "C:\test\27.pdf"
+
+# Nougat 기본 실행
+nougat "C:\test\27.pdf" -o output --no-skipping
+
+# 패키지 업데이트
+pip install nougat-ocr --upgrade
+pip install rapid-latex-ocr --upgrade
+
+# 버전 확인
+pip show nougat-ocr
+pip show rapid-latex-ocr
+pip show tokenizers
+
+================================================================================
